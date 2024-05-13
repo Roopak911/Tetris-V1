@@ -72,7 +72,7 @@ data "aws_ami" "ami" {
 
 resource "aws_instance" "web" {
   ami                    = data.aws_ami.ami.image_id
-  instance_type          = "t2.medium"
+  instance_type          = "t2.xlarge"
   key_name               = "roopak -mumbai"
   vpc_security_group_ids = [aws_security_group.Jenkins-sg.id]
   user_data              = templatefile("./install_jenkins.sh", {})
