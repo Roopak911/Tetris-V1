@@ -114,6 +114,5 @@ dist
 .DS_Store
 
 #terraform tfstate file
-*.tfstate
 *.exe
 *.hcl
