@@ -115,3 +115,5 @@ dist
 
 #terraform tfstate file
 *.tfstate
+*.exe
+*.hcl
