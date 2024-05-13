@@ -1,0 +1,83 @@
+pipeline{
+    agent any
+    tools{
+        jdk 'jdk17'
+        nodejs 'node16'
+    }
+    environment {
+        SCANNER_HOME=tool 'sonar-scanner'
+    }
+    stages {
+        
+        stage('clean workspace'){
+            steps{
+                cleanWs()
+            }
+        }
+        
+        stage('Checkout from Git'){
+            steps{
+                git branch: 'main', url: 'https://github.com/Roopak911/Tetris-V1.git'
+            }
+        }
+        
+        stage("Sonarqube Analysis"){
+            steps{
+                withSonarQubeEnv('sonar-server') {
+                    sh ''' 
+                    $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=TETRISVersion1.0\
+                    -Dsonar.projectKey=TETRISVersion1.0
+                    '''
+                }
+            }
+        }
+        
+        stage("quality gate"){
+           steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
+                }
+            } 
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        
+        stage('OWASP File Scan') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+        
+        stage('TRIVY File Scan') {
+            steps {
+                sh "trivy fs . > trivyfs.txt"
+            }
+        }
+        
+        stage('Docker Build and Push') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker-hub') {
+                        sh '''
+                        docker build -t tetris .
+                        docker tag tetris roopak1991/tetris:V${BUILD_NUMBER}.0
+                        docker push roopak1991/tetris:V${BUILD_NUMBER}.0
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('TRIVY Image Scan') {
+            steps {
+                sh "trivy image roopak1991/tetris:V${BUILD_NUMBER}.0 > trivy_image_scan.txt"
+            }
+        }
+    }
+ }
+    
