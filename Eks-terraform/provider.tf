@@ -9,6 +9,6 @@ terraform {
 
 # Configure the AWS Provider
 provider "aws" {
-  region = "ap-south-1"
+  region                   = "ap-south-1"
   shared_credentials_files = ["../../../../../.aws/credentials"]
 }
